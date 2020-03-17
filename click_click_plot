@@ -12,42 +12,135 @@ import matplotlib
 
 class ClickClickPlotGui():
 
+
+    def pick_col(self, txt, c0, cur=0):
+        """Pick column from crate"""
+        cols = tab.get_colnames(vectors=False,rawonly=False)
+        _label = Label(self.window, text=txt)
+        _label.grid(column=c0, row=self._row)
+        col = Combobox(self.window)
+        col['values']=cols
+        col.current(cur) 
+        col.grid(column=c0+1, row=self._row)
+        return col
+
+    def pick_columns(self):
+        self.xcol = self.pick_col("X-axis",0)
+        self.ycol = self.pick_col("Y-axis",2, cur=1)
+
+
+    def pick_scaling(self, txt, c0):
+        """Pick axis scaling"""
+        lab = Label(self.window, text=txt)
+        lab.grid(column=c0,row=self._row)
+        _scale = Combobox(self.window)
+        _scale['values'] = ["linear", "log"]
+        _scale.current(0)
+        _scale.grid(column=c0+1,row=self._row)
+        return _scale
+
+    def pick_axes_scaling(self):
+        self.x_scale = self.pick_scaling("X-axis scaling", 0)
+        self.y_scale = self.pick_scaling("Y-axis scaling", 2)
+        
+    def pick_line_properties(self):
+        """Set line properties"""
+        lab = Label(self.window, text="Line Style")
+        lab.grid(column=0, row=self._row)
+        self.line_style = Combobox(self.window)
+        self.line_style['values'] = [ "None", "solid", "dotted", "dashdot", "dashed" ]
+        self.line_style.current(1)
+        self.line_style.grid(column=1,row=self._row)
+        
+        lab = Label(self.window, text="Line Color")
+        lab.grid(column=2, row=self._row)
+        self.line_color = Combobox(self.window)
+        self.line_color['values'] = [ "black", "red", "orange", "yellow",
+                    "green", "blue", "violet", ]
+        self.line_color.current(0)
+        self.line_color.grid(column=3,row=self._row)
+        
+        lab = Label(self.window, text="Line Width")
+        lab.grid(column=4, row=self._row)
+        self.line_width = Spinbox(self.window, from_=1, to=10, width=3)
+        self.line_width.grid(column=5,row=self._row)
+
+    def pick_marker_properties(self):
+        """Set marker properties"""
+        lab = Label(self.window, text="Marker Style")
+        lab.grid(column=0, row=self._row)
+        self.marker_style = Combobox(self.window)
+        self.marker_style['values'] = [ "none", "cross", "diamond",
+                "downtriangle", "circle", "plus", "square", "point", 
+                "uptriangle" ]
+        self.marker_style.current(4)
+        self.marker_style.grid(column=1,row=self._row)
+        
+        lab = Label(self.window, text="Marker Color")
+        lab.grid(column=2, row=self._row)
+        self.marker_color = Combobox(self.window)
+        self.marker_color['values'] = [ "black", "red", "orange", "yellow",
+                    "green", "blue", "violet", ]
+        self.marker_color.current(0)
+        self.marker_color.grid(column=3,row=self._row)
+        
+        lab = Label(self.window, text="Marker Size")
+        lab.grid(column=4, row=self._row)
+        self.marker_size = Spinbox(self.window, from_=1, to=10, width=3)
+        self.marker_size.grid(column=5,row=self._row)
+
+
+    def add_buttons(self):
+        btn = Button(self.window, text="Plot", command=self.make_plot)
+        btn.grid(column=1, row=self._row)
+
+        btn = Button(self.window, text="Clear", command=self.clear_plot)
+        btn.grid(column=2, row=self._row)
+
+
+    @staticmethod
+    def map_marker_names(face):
+        """Map nice names to matplotlib token"""
+        _valid = { "none": "None",  
+                   "cross": "X", 
+                   "diamond": "D", 
+                   "downtriangle" : "v", 
+                   "circle" : "o", 
+                   "plus" : "+", 
+                   "square" : "s",
+                   "point" : ".", 
+                   "uptriangle" : "^",
+                   }
+        assert face in _valid, "ERROR: Unknown marker style"
+        return _valid[face]
+        
+
+    def next_row(self):
+        self._row = self._row+1
+        
+
     def __init__(self,tab):
         window = Tk()
-
-        window.title("Click Click Plot")
-
-        window.geometry('350x200')
-
-        cols = tab.get_colnames(vectors=False,rawonly=False)
-
-        x_label = Label(window, text="X-Axis")
-        x_label.grid(column=0, row=0)
-        self.xcol = Combobox(window)
-        self.xcol['values']=cols
-        self.xcol.current(0) 
-        self.xcol.grid(column=1, row=0)
-
-        y_label = Label(window, text="Y-Axis")
-        y_label.grid(column=0, row=1)
-        self.ycol = Combobox(window)        
-        self.ycol['values']=cols
-        self.ycol.current(1)
-        self.ycol.grid(column=1, row=1)
-
-        btn = Button(window, text="Plot", command=self.make_plot)
-        btn.grid(column=1, row=2)
-
-        btn = Button(window, text="Clear", command=self.clear_plot)
-        btn.grid(column=2, row=2)
-
-        # Add Combobox's for line style, spin for line width
-        # Add Comobbox's for marker face, spin for symbol size
-        # Add combobox for log/linear, x&y
-        # color chooser
-
         self.window=window
         self.crate = tab
+
+        self.window.title("Click Click Plot")
+        self.window.geometry('768x256')
+
+        self._row=0
+        self.pick_columns()
+        
+        self.next_row()
+        self.pick_axes_scaling()
+        
+        self.next_row()
+        self.pick_line_properties()
+
+        self.next_row()
+        self.pick_marker_properties()
+
+        self.next_row()
+        self.add_buttons()
 
         
     def make_plot(self):
@@ -62,7 +155,17 @@ class ClickClickPlotGui():
         plt.ylabel(yy)
         plt.title(infile)
 
-        plt.plot( xvals, yvals)
+        plt.plot( xvals, yvals,
+            color=self.line_color.get(),
+            linewidth=self.line_width.get(),
+            linestyle=self.line_style.get(),
+            mfc=self.marker_color.get(),
+            mec=self.marker_color.get(),
+            marker=self.map_marker_names(self.marker_style.get()),
+            markersize=self.marker_size.get()
+            )
+        plt.xscale(self.x_scale.get())
+        plt.yscale(self.y_scale.get())
         plt.show()
         
     def clear_plot(self):
