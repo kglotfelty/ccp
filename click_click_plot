@@ -11,6 +11,39 @@ import matplotlib.pylab as plt
 import matplotlib
 
 
+def make_X11_color_map():
+    """
+    CIAO has colors.par which contains X11 color codes.  They are 
+    normalized from 0:1.
+    
+    We need to convert these to hex values so we can compare with 
+    hex values Tk returns.
+    
+    """
+    
+    
+    import paramio as pio
+    pp = pio.paramopen("colors","r") # CIAO has colors.par
+    
+    colormap = {}
+    colors = pio.plist(pp)
+    for c in colors:
+        if 'mode' == c:
+            continue
+            
+        rgb_norm = pio.pget(pp,c).split()        
+        byteval = [min(int(float(b)*256),255) for b in rgb_norm]
+        h = [ "{:02x}".format(b) for b in byteval ]
+        hexcode = "#"+"".join(h)
+
+        if hexcode not in colormap:
+            colormap[hexcode] = c
+
+    return colormap
+    
+
+
+
 class ClickClickPlotGui():
 
 
@@ -64,12 +97,20 @@ class ClickClickPlotGui():
         self.line_width.grid(column=5,row=self._row, padx=(5,5), pady=(5,5))
 
     def p_line(self):
-        c = askcolor(parent=self.window, title='Pick a line color')
-        self.line_color["text"] = c[1]
+        c = askcolor(color=self.line_color["text"],
+            parent=self.window, title='Pick a line color')
+        if c[1] in self.color_map:
+            self.line_color["text"] = self.color_map[c[1]]
+        else:
+            self.line_color["text"] = c[1]
 
     def p_marker(self):
-        c = askcolor(parent=self.window, title='Pick a marker color')
-        self.marker_color["text"] = c[1]
+        c = askcolor(color=self.marker_color["text"],
+            parent=self.window, title='Pick a marker color')
+        if c[1] in self.color_map:
+            self.marker_color["text"] = self.color_map[c[1]]
+        else:
+            self.marker_color["text"] = c[1]
 
 
     def pick_marker_properties(self):
@@ -129,6 +170,8 @@ class ClickClickPlotGui():
         
 
     def __init__(self,tab):
+
+        self.color_map = make_X11_color_map()
 
         window = Tk()
         s = Style(window)
