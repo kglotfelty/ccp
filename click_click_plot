@@ -21,7 +21,7 @@ def make_X11_color_map():
     
     """
     
-    
+    from matplotlib.colors import is_color_like
     import paramio as pio
     pp = pio.paramopen("colors","r") # CIAO has colors.par
     
@@ -36,7 +36,7 @@ def make_X11_color_map():
         h = [ "{:02x}".format(b) for b in byteval ]
         hexcode = "#"+"".join(h)
 
-        if hexcode not in colormap:
+        if hexcode not in colormap and is_color_like(c) is True:
             colormap[hexcode] = c
 
     return colormap
