@@ -10,6 +10,8 @@ from tkinter.colorchooser import askcolor
 import matplotlib.pylab as plt
 import matplotlib
 
+matplotlib.use("TkAgg")
+matplotlib.interactive(True)
 
 def make_X11_color_map():
     """
@@ -52,6 +54,7 @@ class ClickClickPlotGui():
         cols = tab.get_colnames(vectors=False,rawonly=False)
         _label = Label(self.window, text=txt)
         _label.grid(column=c0, row=self._row, padx=(5,5), pady=(5,5))
+
         col = Combobox(self.window, state="readonly")
         col['values']=cols
         col.current(cur) 
@@ -59,7 +62,7 @@ class ClickClickPlotGui():
         return col
 
     def pick_columns(self):
-        self.xcol = self.pick_col("X-axis",0)
+        self.xcol = self.pick_col("X-axis",0, )
         self.ycol = self.pick_col("Y-axis",2, cur=1)
 
 
@@ -79,6 +82,8 @@ class ClickClickPlotGui():
         
     def pick_line_properties(self):
         """Set line properties"""
+        _default_line_width=2
+        
         lab = Label(self.window, text="Line Style")
         lab.grid(column=0, row=self._row, padx=(5,5), pady=(5,5))
         self.line_style = Combobox(self.window, state="readonly")
@@ -93,9 +98,14 @@ class ClickClickPlotGui():
         
         lab = Label(self.window, text="Line Width")
         lab.grid(column=4, row=self._row, padx=(5,5), pady=(5,5))
+        v = StringVar(self.window)
+        v.set(_default_line_width)
         self.line_width = Spinbox(self.window, from_=1, to=10, width=3)
         self.line_width.grid(column=5,row=self._row, padx=(5,5), pady=(5,5))
-        self.line_width.set(2)
+        if hasattr(self.line_width, "set"):
+            self.line_width.set(_default_line_width)
+        else:
+            self.line_width.config(textvariable=v)
 
 
     def p_line(self):
@@ -109,6 +119,8 @@ class ClickClickPlotGui():
 
     def pick_marker_properties(self):
         """Set marker properties"""
+        _default_marker_size=3
+
         lab = Label(self.window, text="Marker Style")
         lab.grid(column=0, row=self._row, padx=(5,5), pady=(5,5))
         self.marker_style = Combobox(self.window,state="readonly")
@@ -127,9 +139,15 @@ class ClickClickPlotGui():
         
         lab = Label(self.window, text="Marker Size")
         lab.grid(column=4, row=self._row, padx=(5,5), pady=(5,5))
+        v = StringVar(self.window)
+        v.set(_default_marker_size)
         self.marker_size = Spinbox(self.window, from_=1, to=10, width=3)
-        self.marker_size.set(1)
         self.marker_size.grid(column=5,row=self._row, padx=(5,5), pady=(5,5))
+        if hasattr(self.marker_size, "set"):
+            # Something diff between py3.5 and py3.7
+            self.marker_size.set(_default_marker_size)
+        else:
+            self.marker_size.configure(textvariable=v)
 
 
     def p_marker(self):
@@ -139,6 +157,46 @@ class ClickClickPlotGui():
             self.marker_color["text"] = self.color_map[c[1]]
         else:
             self.marker_color["text"] = c[1]
+
+
+    def add_title(self):
+        lab = Label(self.window, text="Plot Title")
+        lab.grid(column=0, row=self._row, padx=(5,5), pady=(5,5))        
+        self.title = Entry(self.window, width=50)
+        self.title.insert(END, self.crate.get_filename())
+        self.title.grid(column=1, columnspan=2, row=self._row, padx=(5,5), pady=(5,5)) 
+
+    def add_xlabel(self):
+        lab = Label(self.window, text="X Label")
+        lab.grid(column=0, row=self._row, padx=(5,5), pady=(5,5))        
+        self.xlabel = Entry(self.window, width=50)
+        self.xlabel.grid(column=1, columnspan=2, row=self._row, padx=(5,5), pady=(5,5)) 
+        self.set_xlabel()
+
+    def set_xlabel(self, *args):        
+        lab = self.xcol.get()
+        col = self.crate.get_column(lab)
+        units = col.unit        
+        if units and len(units)>0:
+            lab = "{} ({})".format(lab,units)
+        self.xlabel.insert(END, lab)
+
+
+    def add_ylabel(self):
+        lab = Label(self.window, text="Y Label")
+        lab.grid(column=0, row=self._row, padx=(5,5), pady=(5,5))        
+        self.ylabel = Entry(self.window, width=50)
+        self.ylabel.grid(column=1, columnspan=2, row=self._row, padx=(5,5), pady=(5,5)) 
+        self.set_ylabel()
+
+    def set_ylabel(self, *args):
+        lab = self.ycol.get()
+        col = self.crate.get_column(lab)
+        units = col.unit        
+        if units and len(units)>0:
+            lab = "{} ({})".format(lab,units)
+
+        self.ylabel.insert(END, lab)
 
 
     def add_buttons(self):
@@ -185,7 +243,7 @@ class ClickClickPlotGui():
         self.crate = tab
 
         self.window.title("Click Click Plot")
-        self.window.geometry('768x256')
+        self.window.geometry('768x320')
 
         self._row=0
         self.pick_columns()
@@ -200,6 +258,14 @@ class ClickClickPlotGui():
         self.pick_marker_properties()
 
         self.next_row()
+        self.add_title()
+
+        self.next_row()
+        self.add_xlabel()
+        self.next_row()
+        self.add_ylabel()
+
+        self.next_row()
         self.add_buttons()
 
         
@@ -207,13 +273,11 @@ class ClickClickPlotGui():
         xx=self.xcol.get()
         yy=self.ycol.get()
         
-        matplotlib.use("TkAgg")
-        matplotlib.interactive(True)
         xvals = self.crate.get_column(xx).values
         yvals = self.crate.get_column(yy).values
-        plt.xlabel(xx)
-        plt.ylabel(yy)
-        plt.title(infile)
+        plt.xlabel(self.xlabel.get())
+        plt.ylabel(self.ylabel.get())
+        plt.title(self.title.get())
 
         plt.plot( xvals, yvals,
             color=self.line_color["text"],
