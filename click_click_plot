@@ -61,6 +61,7 @@ class ClickClickPlotGui():
         col.grid(column=c0+1, row=self._row, padx=(5,5), pady=(5,5))
         return col
 
+
     def pick_columns(self):
         self.xcol = self.pick_col("X-axis",0, )
         self.ycol = self.pick_col("Y-axis",2, cur=1)
@@ -76,9 +77,11 @@ class ClickClickPlotGui():
         _scale.grid(column=c0+1,row=self._row, padx=(5,5), pady=(5,5))
         return _scale
 
+
     def pick_axes_scaling(self):
         self.x_scale = self.pick_scaling("X-axis scaling", 0)
         self.y_scale = self.pick_scaling("Y-axis scaling", 2)
+
         
     def pick_line_properties(self):
         """Set line properties"""
@@ -109,6 +112,8 @@ class ClickClickPlotGui():
 
 
     def p_line(self):
+        """Replace hex code with a nice name if one exists"""
+
         c = askcolor(color=self.line_color["text"],
             parent=self.window, title='Pick a line color')
         if c[1] in self.color_map:
@@ -151,6 +156,8 @@ class ClickClickPlotGui():
 
 
     def p_marker(self):
+        """Replace hex code with a nice name if one exists"""
+
         c = askcolor(color=self.marker_color["text"],
             parent=self.window, title='Pick a marker color')
         if c[1] in self.color_map:
@@ -166,12 +173,14 @@ class ClickClickPlotGui():
         self.title.insert(END, self.crate.get_filename())
         self.title.grid(column=1, columnspan=2, row=self._row, padx=(5,5), pady=(5,5)) 
 
+
     def add_xlabel(self):
         lab = Label(self.window, text="X Label")
         lab.grid(column=0, row=self._row, padx=(5,5), pady=(5,5))        
         self.xlabel = Entry(self.window, width=50)
         self.xlabel.grid(column=1, columnspan=2, row=self._row, padx=(5,5), pady=(5,5)) 
         self.set_xlabel()
+
 
     def set_xlabel(self, *args):        
         lab = self.xcol.get()
@@ -190,6 +199,7 @@ class ClickClickPlotGui():
         self.ylabel = Entry(self.window, width=50)
         self.ylabel.grid(column=1, columnspan=2, row=self._row, padx=(5,5), pady=(5,5)) 
         self.set_ylabel()
+
 
     def set_ylabel(self, *args):
         lab = self.ycol.get()
@@ -273,11 +283,12 @@ class ClickClickPlotGui():
         
         self.xcol.bind("<<ComboboxSelected>>", self.set_xlabel)
         self.ycol.bind("<<ComboboxSelected>>", self.set_ylabel)
-        
-        
 
         
     def make_plot(self):
+        """
+        These are the actual matplotlib commands        
+        """
         xx=self.xcol.get()
         yy=self.ycol.get()
         
@@ -299,12 +310,15 @@ class ClickClickPlotGui():
         plt.xscale(self.x_scale.get())
         plt.yscale(self.y_scale.get())
         plt.show()
+
         
     def clear_plot(self):
         plt.clf()
 
+
     def run(self):
         self.window.mainloop()
+
 
     def quit(self):
         plt.close()
