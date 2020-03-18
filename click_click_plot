@@ -179,6 +179,8 @@ class ClickClickPlotGui():
         units = col.unit        
         if units and len(units)>0:
             lab = "{} ({})".format(lab,units)
+        
+        self.xlabel.delete(0, END)
         self.xlabel.insert(END, lab)
 
 
@@ -196,6 +198,7 @@ class ClickClickPlotGui():
         if units and len(units)>0:
             lab = "{} ({})".format(lab,units)
 
+        self.ylabel.delete(0, END)
         self.ylabel.insert(END, lab)
 
 
@@ -267,6 +270,11 @@ class ClickClickPlotGui():
 
         self.next_row()
         self.add_buttons()
+        
+        self.xcol.bind("<<ComboboxSelected>>", self.set_xlabel)
+        self.ycol.bind("<<ComboboxSelected>>", self.set_ylabel)
+        
+        
 
         
     def make_plot(self):
