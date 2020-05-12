@@ -13,29 +13,25 @@ import matplotlib
 matplotlib.use("TkAgg")
 matplotlib.interactive(True)
 
-__all__ = ["ClickClickPlotGui",]
+__all__ = ["ClickClickPlotGui", ]
 
 
 class ClickClickPlotGui():
     'Plot GUI'
 
-    def pick_col(self, txt, c0, cur=0):
+    def pick_col(self, txt, c0):
         """Pick column from crate"""
         _label = Label(self.window, text=txt)
         _label.grid(column=c0, row=self._row, padx=(5, 5), pady=(5, 5))
-
         col = Combobox(self.window, state="readonly")
-        col['values'] = self.cols
-        col.current(cur)
         col.grid(column=c0+1, row=self._row, padx=(5, 5), pady=(5, 5))
         return col
 
     def pick_columns(self):
-        self.cols = self.crate.get_colnames(vectors=False, rawonly=False)
-        self.xcol = self.pick_col("X-axis", 0,)
-        self.ycol = self.pick_col("Y-axis", 2, cur=1)
-        self.cols.insert(0, "")
-        self.errcol = self.pick_col("Y-Error", 4, cur=0)
+
+        self.xcol = self.pick_col("X-axis", 0)
+        self.ycol = self.pick_col("Y-axis", 2)
+        self.errcol = self.pick_col("Y-Error", 4)
 
     def pick_scaling(self, txt, c0):
         """Pick axis scaling"""
@@ -162,7 +158,6 @@ class ClickClickPlotGui():
         lab = Label(self.window, text="Plot Title")
         lab.grid(column=0, row=self._row, padx=(5, 5), pady=(5, 5))
         self.title = Entry(self.window, width=50)
-        self.title.insert(END, self.crate.get_filename())
         self.title.grid(column=1, columnspan=2, row=self._row, padx=(5, 5), pady=(5, 5))
 
     def add_xlabel(self):
@@ -170,7 +165,6 @@ class ClickClickPlotGui():
         lab.grid(column=0, row=self._row, padx=(5, 5), pady=(5, 5))
         self.xlabel = Entry(self.window, width=50)
         self.xlabel.grid(column=1, columnspan=2, row=self._row, padx=(5, 5), pady=(5, 5))
-        self.set_xlabel()
 
     def set_xlabel(self, *args):
         lab = self.xcol.get()
@@ -187,7 +181,6 @@ class ClickClickPlotGui():
         lab.grid(column=0, row=self._row, padx=(5, 5), pady=(5, 5))
         self.ylabel = Entry(self.window, width=50)
         self.ylabel.grid(column=1, columnspan=2, row=self._row, padx=(5, 5), pady=(5, 5))
-        self.set_ylabel()
 
     def set_ylabel(self, *args):
         lab = self.ycol.get()
@@ -241,15 +234,45 @@ class ClickClickPlotGui():
         'Create GUI based on a TABLECrate'
 
         self.color_map = self.make_X11_color_map()
+        self.render_ui()
+        self.populate_from_crate(tab)
 
+    def populate_from_crate(self, tab):
+        'Fill in UI w/ info from crate'
+
+        self.crate = tab
+        self.cols = self.crate.get_colnames(vectors=False, rawonly=False)
+        self.xcol['values'] = self.cols
+        self.xcol.current(0)
+        self.ycol['values'] = self.cols
+        self.ycol.current(1)
+        self.cols.insert(0, "")
+        self.errcol['values'] = self.cols
+        self.errcol.current(0)
+        self.title.delete(0, END)
+        self.title.insert(END, self.crate.get_filename())
+        self.set_xlabel()
+        self.set_ylabel()
+
+    def menu_bar(self):
+        menu = Menu(self.window)
+        file_menu = Menu(menu, tearoff=0)
+        file_menu.add_command(label="Open", command=self.open)
+        file_menu.add_separator()
+        file_menu.add_command(label="Quit", command=self.quit)
+        menu.add_cascade(label='File', menu=file_menu)
+        self.window.config(menu=menu)
+
+    def render_ui(self):
         window = Tk()
         s = Style(window)
         s.theme_use("clam")
 
         self.window = window
-        self.crate = tab
 
         self.window.title("Click Click Plot")
+
+        self.menu_bar()
 
         self._row = 0
         self.pick_columns()
@@ -332,6 +355,16 @@ class ClickClickPlotGui():
     def quit(self):
         plt.close()
         self.window.destroy()
+
+    def open(self):
+        from tkinter import filedialog as fd
+        fname = fd.askopenfilename()
+        if 0 == len(fname):
+            return
+
+        from pycrates import TABLECrate
+        tab = TABLECrate(fname, mode="r")
+        self.populate_from_crate(tab)
 
 
 def tool():
