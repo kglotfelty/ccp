@@ -7,6 +7,7 @@ import os
 from tkinter import *
 from tkinter.ttk import *
 from tkinter.colorchooser import askcolor
+from tkinter import filedialog as fd
 import matplotlib.pylab as plt
 import matplotlib
 
@@ -193,11 +194,13 @@ class ClickClickPlotGui():
         self.ylabel.insert(END, lab)
 
     def add_buttons(self):
-        btn = Button(self.window, text="Plot", command=self.make_plot)
-        btn.grid(column=1, row=self._row, padx=(5, 5), pady=(5, 5))
+        self.plot_btn = Button(self.window, text="Plot", command=self.make_plot)
+        self.plot_btn.grid(column=1, row=self._row, padx=(5, 5), pady=(5, 5))
+        self.plot_btn["state"] = "disabled"
 
-        btn = Button(self.window, text="Clear", command=self.clear_plot)
-        btn.grid(column=2, row=self._row, padx=(5, 5), pady=(5, 5))
+        self.clear_btn = Button(self.window, text="Clear", command=self.clear_plot)
+        self.clear_btn.grid(column=2, row=self._row, padx=(5, 5), pady=(5, 5))
+        self.clear_btn["state"] = "disabled"
 
         btn = Button(self.window, text="Quit", command=self.quit)
         btn.grid(column=3, row=self._row, padx=(5, 5), pady=(5, 5))
@@ -230,12 +233,17 @@ class ClickClickPlotGui():
         colormap = {cnames[k].lower(): k for k in cnames}
         return colormap
 
-    def __init__(self, tab):
+    def __init__(self, tab, open_func=None):
         'Create GUI based on a TABLECrate'
 
+        self.open_func = open_func
         self.color_map = self.make_X11_color_map()
         self.render_ui()
-        self.populate_from_crate(tab)
+
+        if tab is not None:
+            self.populate_from_crate(tab)
+        if open_func is not None:
+            self.file_menu.entryconfig("Open", state="normal")
 
     def populate_from_crate(self, tab):
         'Fill in UI w/ info from crate'
@@ -253,14 +261,16 @@ class ClickClickPlotGui():
         self.title.insert(END, self.crate.get_filename())
         self.set_xlabel()
         self.set_ylabel()
+        self.plot_btn["state"] = "normal"
+        self.clear_btn["state"] = "normal"
 
     def menu_bar(self):
         menu = Menu(self.window)
-        file_menu = Menu(menu, tearoff=0)
-        file_menu.add_command(label="Open", command=self.open)
-        file_menu.add_separator()
-        file_menu.add_command(label="Quit", command=self.quit)
-        menu.add_cascade(label='File', menu=file_menu)
+        self.file_menu = Menu(menu, tearoff=0)
+        self.file_menu.add_command(label="Open", command=self.open, state="disabled")
+        self.file_menu.add_separator()
+        self.file_menu.add_command(label="Quit", command=self.quit)
+        menu.add_cascade(label='File', menu=self.file_menu)
         self.window.config(menu=menu)
 
     def render_ui(self):
@@ -357,25 +367,23 @@ class ClickClickPlotGui():
         self.window.destroy()
 
     def open(self):
-        from tkinter import filedialog as fd
         fname = fd.askopenfilename()
         if 0 == len(fname):
             return
-
-        from pycrates import TABLECrate
-        tab = TABLECrate(fname, mode="r")
+        tab = self.open_func(fname, mode="r")
         self.populate_from_crate(tab)
 
 
 def tool():
-    assert len(sys.argv) == 2, "Usage: click_click_plot infile"
-
-    infile = sys.argv[1]
-
     from pycrates import TABLECrate
-    tab = TABLECrate(infile, mode="r")
 
-    app = ClickClickPlotGui(tab)
+    if len(sys.argv) == 2:
+        infile = sys.argv[1]
+        tab = TABLECrate(infile, mode="r")
+    else:
+        tab = None
+
+    app = ClickClickPlotGui(tab, open_func=TABLECrate)
     app.run()
 
 
