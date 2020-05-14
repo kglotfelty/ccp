@@ -233,7 +233,7 @@ class ClickClickPlotGui():
         colormap = {cnames[k].lower(): k for k in cnames}
         return colormap
 
-    def __init__(self, tab, open_func=None):
+    def __init__(self, tab=None, open_func=None):
         'Create GUI based on a TABLECrate'
 
         self.open_func = open_func
