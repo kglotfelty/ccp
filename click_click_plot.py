@@ -375,19 +375,3 @@ class ClickClickPlotGui():
         tab = self.open_func(fname, mode="r")
         self.populate_from_crate(tab)
 
-
-def tool():
-    from pycrates import TABLECrate
-
-    if len(sys.argv) == 2:
-        infile = sys.argv[1]
-        tab = TABLECrate(infile, mode="r")
-    else:
-        tab = None
-
-    app = ClickClickPlotGui(tab, open_func=TABLECrate)
-    app.run()
-
-
-if __name__ == "__main__":
-    tool()
