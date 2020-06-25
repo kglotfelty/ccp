@@ -16,6 +16,20 @@ matplotlib.interactive(True)
 
 __all__ = ["ClickClickPlotGui", ]
 
+class FinalPlot():
+    'PNG of final plot'
+    
+    def __init__(self):
+        from io import BytesIO
+        outfile = BytesIO()
+        plt.savefig( outfile, format="png")
+        outfile.seek(0)  # rewind to beginning
+        self.dd = outfile.read()
+    
+    def _repr_png_(self):
+        return self.dd
+
+
 
 class ClickClickPlotGui():
     'Plot GUI'
@@ -363,10 +377,14 @@ class ClickClickPlotGui():
     def run(self):
         self.window.update()
         self.window.mainloop()
+        return self.fp
 
     def quit(self):
+        self.fp = FinalPlot()
         plt.close()
+        self.window.quit()
         self.window.destroy()
+        
 
     def open(self):
         fname = fd.askopenfilename()
