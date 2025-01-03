@@ -253,6 +253,7 @@ class ClickClickPlotGui():
         self.open_func = open_func
         self.color_map = self.make_X11_color_map()
         self.render_ui()
+        self.fp = None
 
         if tab is not None:
             self.populate_from_crate(tab)
